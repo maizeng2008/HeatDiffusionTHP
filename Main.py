@@ -12,7 +12,7 @@ import os
 from preprocess.Dataset import get_dataloader
 # from transformer.Models import Transformer
 # import transformer.Constants as Constants
-from transformerhkhd.Models import Transformer as V2
+from transformerhkhd.Models import Transformer 
 import transformerhkhd.Constants as Constants
 from tqdm import tqdm
 import random
@@ -144,15 +144,6 @@ def train_epoch(model, training_data, optimizer, pred_loss_func, opt, epoch=None
         else:
             loss = loss + se
 
-        # # ----------- (old) scale the the time loss for better balance -------
-        # se_ = se * 1
-        # scale_time_loss = 10
-        # # # SE is usually large, scale it to stabilize training
-        # while se_ - (pred_loss + event_loss) > 10:
-        #     se_ /= scale_time_loss
-        # loss = event_loss + pred_loss + se_
-        # # ----------- (old) scale the the time loss for better balance -------
-
         loss_ = loss / num_pred
         loss_.backward()
 
@@ -236,7 +227,6 @@ def eval_epoch(model, validation_data, pred_loss_func, opt, epoch=None):
             total_event_rate += pred_num.item()
             total_num_event += event_type.ne(Constants.PAD).sum().item()
             total_num_pred += event_type.ne(Constants.PAD).sum().item() - event_time.shape[0]
-            # breakpoint()
             total_time_error.append(se.item())
             # This is event ll not event loss
             total_event_loss += event_ll.sum().item()
@@ -267,13 +257,6 @@ def train(model, training_data, validation_data, test_data, optimizer, scheduler
     test_event_losses = []
     test_pred_losses = []
     test_rmse = []
-    # writer = SummaryWriter("./tb/tb_logs_dataset_{}_epoch_{}_n_heads_{}_seed_{}".format(opt.data, opt.epoch, opt.n_head, opt.seed))
-
-    # is_exist = os.path.exists('.'+opt.tb_log)
-    #
-    # if is_exist == False:
-    #     os.mkdir('.'+opt.tb_log)
-    writer = SummaryWriter(log_dir=opt.tb_log)
 
     train_event_loss_total = []
     train_non_event_loss_total = []
@@ -346,9 +329,7 @@ def train(model, training_data, validation_data, test_data, optimizer, scheduler
             writer.add_scalar("rmse/train", train_time, epoch)
             writer.add_scalar("rmse/test", test_time, epoch)
             # logging
-            with open(
-                    opt.root + opt.ExpFolder + '/' + opt.data_name + '/' + opt.ExpHyper + log_name,
-                    'a') as f:
+            with open(log_name,'a') as f:
                 f.write('{epoch}, {ll: 8.5f}, {acc: 8.5f}, {rmse: 8.5f}'
                         ', {train_event_loss: 8.5f}, {train_non_event_loss: 8.5f}'
                         ', {valid_event_loss: 8.5f}, {valid_non_event_loss: 8.5f}'
@@ -366,14 +347,6 @@ def train(model, training_data, validation_data, test_data, optimizer, scheduler
 
 
         # ploting
-
-
-        # # ------ (old) early stopping ---------
-        # gap = min(valid_event_losses) - valid_event_losses[-1]
-        # if abs(gap) < early_stop_threshold:
-        #     early_step += 1
-        # else:
-        #     early_step = 0
 
         # ------ early stopping ---------
         gap = min(valid_total_losses) - valid_total_losses[-1]
@@ -448,8 +421,7 @@ def train(model, training_data, validation_data, test_data, optimizer, scheduler
         test_event_loss_total += [test_event_loss]
         test_non_event_loss_total += [test_non_event_loss]
 
-        with open(
-                opt.root + opt.ExpFolder + '/' + opt.data_name + '/' + opt.ExpHyper + opt.final_result_log.format(opt.seed),
+        with open(opt.final_result_log.format(opt.seed),
                 'a') as final_f:
             final_f.write('  - (Test)     loglikelihood: {ll: 8.5f}, '
                   'accuracy: {type: 8.5f}, RMSE: {rmse: 8.5f}, '
@@ -477,7 +449,7 @@ def main():
     """ Main function. """
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-root', default='/home/liheng/Projects/HKHP/')
+    parser.add_argument('-root', default='./')
     parser.add_argument('-data', required=True)
     parser.add_argument('-seed', required=True)
     parser.add_argument('-epoch', type=int, default=30)
@@ -538,13 +510,7 @@ def main():
 
     # setup the log file
     log_name = opt.log.format(random_seed)
-    with open(opt.root + opt.ExpFolder + '/' + opt.data_name + '/' +opt.ExpHyper + log_name, 'w') as f:
-        f.write('{},{},{},{},{},{}\n'.format(opt.ExpHyper
-                                                      , opt.data_name
-                                                      , opt.batch_size
-                                                      , opt.n_head
-                                                      , opt.n_samples
-                                                      , opt.n_taylor_terms))
+    with open(log_name, 'w') as f:
         f.write('Epoch,Log-likelihood,Accuracy,RMSE'
                 ',TrainEventLL,TrainNonEventLL,ValEventLL,ValNonEventLL,TestEventLL,TestNonEventLL'
                 ',TrainLoss,TrainAcc,TrainRMSE'
@@ -562,12 +528,6 @@ def main():
     """ prepare dataloader """
     # trainloader, validationloader, testloader, num_types, max_length = prepare_dataloader(opt)
     trainloader, validationloader, testloader, num_types = prepare_dataloader(opt)
-    if vars(opt).get("scalar_time", False):
-        Transformer = V3
-        print("V3")
-    else:
-        Transformer = V2
-        print("V2")
     """ prepare model """
     model = Transformer(
         num_types=num_types,
