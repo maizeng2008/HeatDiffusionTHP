@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-import transformerhk_v2.Constants as Constants
+import transformerhkhd.Constants as Constants
 from transformerhk_v2.Layers import EncoderLayer # , TimeDecoderLayer, TypeDecoderLayer, SetTransformerDecoder
 import opt_einsum as oe
 

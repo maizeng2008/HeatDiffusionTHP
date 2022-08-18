@@ -3,11 +3,11 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-import transformerhk_v2.Constants as Constants
-from transformerhk_v2.Modules import ScaledDotProductAttention
-from transformerhk_v2.MLP import MLP
+import transformerhkhd.Constants as Constants
+from transformerhkhd.Modules import ScaledDotProductAttention
+from transformerhkhd.MLP import MLP
 import opt_einsum as oe
-import transformerhk_v2.Constants as Constants
+import transformerhkhd.Constants as Constants
 from pathlib import Path
 
 class HeatDiffusionAttention(nn.Module):
@@ -152,13 +152,7 @@ class HeatDiffusionAttention(nn.Module):
         # v = v.transpose(1, 2)
 
         attn = self.attention(q, k, mask=None)  # do masking outside
-
-        if self.visual and epoch is not None and epoch > 50:
-            p = Path('/home/maizeng/scratch/attn_pattern/StackOverflow/PosEnc/attn_log_v2_epoch.npy')
-            attn_copy = attn.clone().detach()
-            with p.open('wb') as f:
-                np.save(f, attn_copy.cpu().numpy())
-
+        
         # h x lq x lq
         I = torch.eye(len_q, device=attn.device).unsqueeze(0)
         attn = attn - I
@@ -237,11 +231,6 @@ class HeatDiffusionAttention(nn.Module):
 
             # fixed: just fixed from -1e16 to 0
             # fixme: (Aug 1) see which shape of the mask (hadamard product or masked_fill)
-        if self.visual and epoch is not None and epoch > 50:
-            p = Path('/home/maizeng/scratch/attn_pattern/StackOverflow/PosEnc/T_log_v2_epoch_{}.npy'.format(epoch))
-            T_ = T.clone().detach()
-            with p.open('wb') as f:
-                np.save(f, T_.cpu().numpy()[0])
 
         # Transpose to move the head dimension back: b x lq x n x dv
         # Combine the last two dimensions to concatenate all the heads together: b x lq x (n*dv)

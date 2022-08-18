@@ -2,8 +2,8 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 
-from transformerhk_v2.SubLayers import HeatDiffusionAttention, PositionwiseFeedForward
-from transformerhk_v2.Modules import ScaledDotProductAttention
+from transformerhkhd.SubLayers import HeatDiffusionAttention, PositionwiseFeedForward
+from transformerhkhd.Modules import ScaledDotProductAttention
 import opt_einsum as oe
 
 
